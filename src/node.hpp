@@ -17,11 +17,18 @@ struct Node {
 
     Node* left;
     Node* right;
+    Node* parent;
 
-    Node() : id(0), gender('H'), age(0), id_boss(0),
-             is_dead(false), in_jail(false),
-             was_boss(false), is_boss(false),
-             left(nullptr), right(nullptr) {}
-};
+    Node(int _id,
+         const std::string& _name,
+         const std::string& _last,
+         char _gender,
+         int _age,
+         int _boss,
+         bool dead,
+         bool jail,
+         bool was,
+         bool isb);
+    };
 
 #endif
