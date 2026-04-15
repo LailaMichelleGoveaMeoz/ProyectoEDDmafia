@@ -167,3 +167,61 @@ void Tree::modify(int id) {
     cout << "Es jefe actual (1/0): ";
     cin >> node->is_boss;
 }
+
+
+// 4 Helpers de sucesión
+
+
+Node* Tree::findSuccessorInSubtree(Node* start, bool allowJailed) {
+    if (!start) return nullptr;
+
+    Queue q;
+    if (start->left) q.enqueue(start->left);
+    if (start->right) q.enqueue(start->right);
+
+    while (!q.isEmpty()) {
+        Node* current = q.dequeue();
+
+        bool alive = !current->is_dead;
+        bool free_ = !current->in_jail;
+
+        if (alive && (free_ || allowJailed)) {
+            return current;
+        }
+
+        if (current->left) q.enqueue(current->left);
+        if (current->right) q.enqueue(current->right);
+    }
+    return nullptr;
+}
+
+Node* Tree::findSuccessorFromOtherChildOfParent(Node* boss, bool allowJailed) {
+    if (!boss || !boss->parent) return nullptr;
+
+    Node* parent = boss->parent;
+
+    Node* other = nullptr;
+    if (parent->left == boss)
+        other = parent->right;
+    else if (parent->right == boss)
+        other = parent->left;
+
+    if (!other) return nullptr;
+
+    bool alive = !other->is_dead;
+    bool free_ = !other->in_jail;
+    bool hasChildren = (other->left != nullptr || other->right != nullptr);
+
+    if (alive && free_ && !hasChildren && !allowJailed) {
+        return other;
+    }
+
+    Node* res = findSuccessorInSubtree(other, allowJailed);
+    if (res) return res;
+
+    if (alive && (free_ || allowJailed)) {
+        return other;
+    }
+
+    return nullptr;
+}
