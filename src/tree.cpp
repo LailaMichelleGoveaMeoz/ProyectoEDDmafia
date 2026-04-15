@@ -288,3 +288,41 @@ Node* Tree::findNearestBossWithTwoFreeSuccessors(bool allowJailed) {
     }
     return nullptr;
 }
+
+Node* Tree::findGlobalSuccessor(bool allowJailed) {
+    if (!root) return nullptr;
+
+    Queue q;
+    q.enqueue(root);
+
+    while (!q.isEmpty()) {
+        Node* current = q.dequeue();
+
+        bool alive = !current->is_dead;
+        bool free_ = !current->in_jail;
+
+        if (alive && (free_ || allowJailed) && !current->is_boss) {
+            return current;
+        }
+
+        if (current->left) q.enqueue(current->left);
+        if (current->right) q.enqueue(current->right);
+    }
+    return nullptr;
+}
+
+Node* Tree::findCurrentBoss() {
+    if (!root) return nullptr;
+
+    Queue q;
+    q.enqueue(root);
+
+    while (!q.isEmpty()) {
+        Node* current = q.dequeue();
+        if (current->is_boss) return current;
+
+        if (current->left) q.enqueue(current->left);
+        if (current->right) q.enqueue(current->right);
+    }
+    return nullptr;
+}
