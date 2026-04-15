@@ -326,3 +326,108 @@ Node* Tree::findCurrentBoss() {
     }
     return nullptr;
 }
+
+// utilizando las funciones anteriores para cumplir con las reglas de sucesión
+void Tree::updateBoss() {
+    Node* boss = findCurrentBoss();
+    if (!boss) {
+        cout << "No hay jefe actual definido.\n";
+        return;
+    }
+
+    bool died      = boss->is_dead;
+    bool inPrison  = boss->in_jail;
+    bool tooOld    = boss->age > 70;
+
+    if (!died && !inPrison && !tooOld) {
+        cout << "El jefe actual sigue en el cargo.\n";
+        return;
+    }
+
+    cout << "\nEl jefe actual deja el cargo: "
+         << boss->name << " " << boss->last_name << endl;
+
+    boss->is_boss = false;
+    boss->was_boss = true;
+
+    Node* successor = nullptr;
+
+    if (!died && (inPrison || tooOld)) {
+        successor = findSuccessorInSubtree(boss, false);
+
+        if (!successor) {
+            cout << "No hay sucesores libres vivos en el árbol del jefe.\n";
+        }
+    }
+
+    if (died) {
+        if (!successor && hasChildren(boss))
+            successor = findSuccessorInSubtree(boss, false);
+
+        if (!successor && !hasChildren(boss))
+            successor = findSuccessorFromOtherChildOfParent(boss, false);
+
+        if (!successor)
+            successor = findInPreviousBossCompanion(boss, false);
+
+        if (!successor)
+            successor = findNearestBossWithTwoFreeSuccessors(false);
+
+        if (!successor)
+            successor = findGlobalSuccessor(false);
+
+        if (!successor) {
+            cout << "No hay sucesores libres vivos. Buscando entre encarcelados vivos...\n";
+
+            Node* jailedCandidate = findGlobalSuccessor(true);
+
+            while (jailedCandidate) {
+                successor = findSuccessorInSubtree(jailedCandidate, false);
+
+                if (successor) break;
+
+                Node* next = nullptr;
+
+                Queue q;
+                q.enqueue(root);
+
+                bool foundPrevious = false;
+
+                while (!q.isEmpty()) {
+                    Node* current = q.dequeue();
+
+                    if (current == jailedCandidate) {
+                        foundPrevious = true;
+                    }
+                    else if (foundPrevious) {
+                        if (!current->is_dead && current->in_jail) {
+                            next = current;
+                            break;
+                        }
+                    }
+
+                    if (current->left) q.enqueue(current->left);
+                    if (current->right) q.enqueue(current->right);
+                }
+
+                jailedCandidate = next;
+            }
+        }
+    }
+
+    while (successor && (successor->is_dead || successor->in_jail || successor->age > 70)) {
+        cout << "El sucesor elegido ("
+             << successor->name << " " << successor->last_name
+             << ") no puede ser jefe (muerto, preso o mayor de 70). Buscando otro...\n";
+
+        successor = findGlobalSuccessor(false);
+    }
+
+    if (successor) {
+        successor->is_boss = true;
+        cout << "Nuevo jefe: "
+             << successor->name << " " << successor->last_name << endl;
+    } else {
+        cout << "No se pudo encontrar un nuevo jefe.\n";
+    }
+}
