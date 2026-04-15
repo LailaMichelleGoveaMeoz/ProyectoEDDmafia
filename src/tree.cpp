@@ -431,3 +431,77 @@ void Tree::updateBoss() {
         cout << "No se pudo encontrar un nuevo jefe.\n";
     }
 }
+
+// =========================
+// Cargar CSV
+// =========================
+void Tree::loadFromCSV(const std::string& filename) {
+    clear();
+
+    ifstream file(filename);
+    if (!file.is_open()) {
+        cout << "No se pudo abrir " << filename << "\n";
+        return;
+    }
+
+    string line;
+    getline(file, line); // encabezado
+
+    Node* nodes[200];
+    int count = 0;
+
+    while (getline(file, line)) {
+        if (line.empty()) continue;
+
+        stringstream ss(line);
+
+        string temp, name, last;
+        int id, age, id_boss;
+        char gender;
+        int dead, jail, was, isb;
+
+        getline(ss, temp, ','); id = stoi(temp);
+        getline(ss, name, ',');
+        getline(ss, last, ',');
+        getline(ss, temp, ','); gender = temp[0];
+        getline(ss, temp, ','); age = stoi(temp);
+        getline(ss, temp, ','); id_boss = stoi(temp);
+        getline(ss, temp, ','); dead = stoi(temp);
+        getline(ss, temp, ','); jail = stoi(temp);
+        getline(ss, temp, ','); was = stoi(temp);
+        getline(ss, temp, ','); isb = stoi(temp);
+
+        Node* n = new Node(id, name, last, gender, age,
+                           id_boss, dead, jail, was, isb);
+
+        nodes[count++] = n;
+    }
+    cout << "Se cargaron " << count << " lineas del CSV\n";
+
+    file.close();
+
+    for (int i = 0; i < count; i++) {
+        if (nodes[i]->id_boss == 0) {
+            insert(nodes[i]);
+        }
+    }
+
+    bool insertedSomething = true;
+    while (insertedSomething) {
+        insertedSomething = false;
+
+        for (int i = 0; i < count; i++) {
+            Node* n = nodes[i];
+
+            if (n->parent != nullptr || n == getRoot()) continue;
+
+            Node* boss = findById(n->id_boss);
+
+            if (boss) {
+                if (insert(n)) {
+                    insertedSomething = true;
+                }
+            }
+        }
+    }
+}
