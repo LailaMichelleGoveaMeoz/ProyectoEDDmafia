@@ -168,9 +168,7 @@ void Tree::modify(int id) {
     cin >> node->is_boss;
 }
 
-
 // 4 Helpers de sucesión
-
 
 Node* Tree::findSuccessorInSubtree(Node* start, bool allowJailed) {
     if (!start) return nullptr;
@@ -195,6 +193,7 @@ Node* Tree::findSuccessorInSubtree(Node* start, bool allowJailed) {
     return nullptr;
 }
 
+// función para buscar sucesores en el otro hijo del mismo jefe
 Node* Tree::findSuccessorFromOtherChildOfParent(Node* boss, bool allowJailed) {
     if (!boss || !boss->parent) return nullptr;
 
@@ -223,5 +222,69 @@ Node* Tree::findSuccessorFromOtherChildOfParent(Node* boss, bool allowJailed) {
         return other;
     }
 
+    return nullptr;
+}
+
+// funcion para buscar sucesores en el companero del jefe anterior
+Node* Tree::findInPreviousBossCompanion(Node* boss, bool allowJailed) {
+    if (!boss || !boss->parent || !boss->parent->parent) return nullptr;
+
+    Node* previousBoss = boss->parent;
+    Node* grandBoss   = previousBoss->parent;
+
+    Node* companion = nullptr;
+    if (grandBoss->left == previousBoss)
+        companion = grandBoss->right;
+    else if (grandBoss->right == previousBoss)
+        companion = grandBoss->left;
+
+    if (!companion) return nullptr;
+
+    bool alive = !companion->is_dead;
+    bool free_ = !companion->in_jail;
+    bool hasChildren = (companion->left != nullptr || companion->right != nullptr);
+
+    if (alive && free_ && !hasChildren && !allowJailed) {
+        return companion;
+    }
+
+    Node* res = findSuccessorInSubtree(companion, allowJailed);
+    if (res) return res;
+
+    if (alive && (free_ || allowJailed)) {
+        return companion;
+    }
+
+    return nullptr;
+}
+
+// función para buscar sucesores en el jefe más cercano con 2 sucesores libres
+Node* Tree::findNearestBossWithTwoFreeSuccessors(bool allowJailed) {
+    if (!root) return nullptr;
+
+    Queue q;
+    q.enqueue(root);
+
+    while (!q.isEmpty()) {
+        Node* current = q.dequeue();
+
+        if (current->left) q.enqueue(current->left);
+        if (current->right) q.enqueue(current->right);
+
+        if (current->left && current->right) {
+            bool leftAlive  = !current->left->is_dead;
+            bool leftFree   = !current->left->in_jail;
+            bool rightAlive = !current->right->is_dead;
+            bool rightFree  = !current->right->in_jail;
+
+            bool leftOk  = leftAlive  && (leftFree  || allowJailed);
+            bool rightOk = rightAlive && (rightFree || allowJailed);
+
+            if (leftOk && rightOk) {
+                if (leftOk)  return current->left;
+                if (rightOk) return current->right;
+            }
+        }
+    }
     return nullptr;
 }
