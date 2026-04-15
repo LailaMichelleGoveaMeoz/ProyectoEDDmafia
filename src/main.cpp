@@ -44,3 +44,7 @@ int main() {
         default:
             cout << "Opcion invalida\n";
         }
+} while (op != 0);
+
+    return 0;
+}
