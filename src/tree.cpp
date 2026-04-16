@@ -211,9 +211,9 @@ Node* Tree::findSuccessorFromOtherChildOfParent(Node* boss, bool allowJailed) {
     bool free_ = !other->in_jail;
     bool hasChildren = (other->left != nullptr || other->right != nullptr);
 
-    if (alive && free_ && !hasChildren && !allowJailed) {
-        return other;
-    }
+    if (alive && (free_ || allowJailed)) {
+    return other;
+}
 
     Node* res = findSuccessorInSubtree(other, allowJailed);
     if (res) return res;
