@@ -353,12 +353,13 @@ void Tree::updateBoss() {
     Node* successor = nullptr;
 
     if (!died && (inPrison || tooOld)) {
-        successor = findSuccessorInSubtree(boss, false);
+    successor = findSuccessorInSubtree(boss, false);
 
-        if (!successor) {
-            cout << "No hay sucesores libres vivos en el árbol del jefe.\n";
-        }
+    if (!successor) {
+        died = true;
     }
+}
+
 
     if (died) {
         if (!successor && hasChildren(boss))
