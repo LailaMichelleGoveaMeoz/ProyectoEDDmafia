@@ -208,12 +208,14 @@ Node* Tree::findSuccessorFromOtherChildOfParent(Node* boss, bool allowJailed) {
     if (!other) return nullptr;
 
     bool alive = !other->is_dead;
-    bool free_ = !other->in_jail;
-    bool hasChildren = (other->left != nullptr || other->right != nullptr);
+bool free_ = !other->in_jail;
 
-    if (alive && (free_ || allowJailed)) {
+if (alive && (free_ || allowJailed)) {
     return other;
 }
+
+return findSuccessorInSubtree(other, allowJailed);
+
 
     Node* res = findSuccessorInSubtree(other, allowJailed);
     if (res) return res;
