@@ -5,7 +5,7 @@ using namespace std;
 
 int main() {
     Tree tree;
-    tree.loadFromCSV("data.csv");
+    tree.loadFromCSV("bin/data.csv");
 
     cout << "\nÁrbol cargado:\n";
     tree.showSuccession(tree.getRoot());
