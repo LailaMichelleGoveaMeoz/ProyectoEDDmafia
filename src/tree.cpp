@@ -353,8 +353,19 @@ void Tree::updateBoss() {
 
 
     if (died) {
-        if (!successor && hasChildren(boss))
-            successor = findSuccessorInSubtree(boss, false);
+        // Solo buscar sucesor en su árbol si tiene hijos VIVOS Y LIBRES
+if (!successor) {
+    Node* left = boss->left;
+    Node* right = boss->right;
+
+    bool leftValid = left && !left->is_dead && !left->in_jail;
+    bool rightValid = right && !right->is_dead && !right->in_jail;
+
+    if (leftValid || rightValid) {
+        successor = findSuccessorInSubtree(boss, false);
+    }
+}
+
 
         if (!successor && !hasChildren(boss))
             successor = findSuccessorFromOtherChildOfParent(boss, false);
