@@ -193,7 +193,6 @@ Node* Tree::findSuccessorInSubtree(Node* start, bool allowJailed) {
     return nullptr;
 }
 
-// función para buscar sucesores en el otro hijo del mismo jefe
 Node* Tree::findSuccessorFromOtherChildOfParent(Node* boss, bool allowJailed) {
     if (!boss || !boss->parent) return nullptr;
 
@@ -208,23 +207,13 @@ Node* Tree::findSuccessorFromOtherChildOfParent(Node* boss, bool allowJailed) {
     if (!other) return nullptr;
 
     bool alive = !other->is_dead;
-bool free_ = !other->in_jail;
-
-if (alive && (free_ || allowJailed)) {
-    return other;
-}
-
-return findSuccessorInSubtree(other, allowJailed);
-
-
-    Node* res = findSuccessorInSubtree(other, allowJailed);
-    if (res) return res;
+    bool free_ = !other->in_jail;
 
     if (alive && (free_ || allowJailed)) {
         return other;
     }
 
-    return nullptr;
+    return findSuccessorInSubtree(other, allowJailed);
 }
 
 // funcion para buscar sucesores en el companero del jefe anterior
