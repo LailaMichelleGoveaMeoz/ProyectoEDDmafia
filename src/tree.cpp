@@ -302,6 +302,30 @@ Node* Tree::findGlobalSuccessor(bool allowJailed) {
     return nullptr;
 }
 
+Node* Tree::findNextGlobalSuccessor(Node* skip, bool allowJailed) {
+    if (!root) return nullptr;
+
+    Queue q;
+    q.enqueue(root);
+
+    while (!q.isEmpty()) {
+        Node* current = q.dequeue();
+
+        if (current != skip) {
+            bool alive = !current->is_dead;
+            bool free_ = !current->in_jail;
+
+            if (alive && (free_ || allowJailed) && !current->is_boss)
+                return current;
+        }
+
+        if (current->left) q.enqueue(current->left);
+        if (current->right) q.enqueue(current->right);
+    }
+    return nullptr;
+}
+
+
 Node* Tree::findCurrentBoss() {
     if (!root) return nullptr;
 
@@ -352,79 +376,144 @@ void Tree::updateBoss() {
 }
 
 
-    if (died) {
-        // Solo buscar sucesor en su árbol si tiene hijos VIVOS Y LIBRES
+   if (died) {
+
+    // 1. REGLA 1: Hijos del jefe
+    if (!successor) {
+        Node* left = boss->left;
+        Node* right = boss->right;
+
+        bool leftValid = left && !left->is_dead && !left->in_jail;
+        bool rightValid = right && !right->is_dead && !right->in_jail;
+
+        if (leftValid || rightValid) {
+            successor = findSuccessorInSubtree(boss, false);
+        }
+    }
+
+    // 2. REGLA 2: Hermano del jefe
+    if (!successor && !hasChildren(boss))
+        successor = findSuccessorFromOtherChildOfParent(boss, false);
+
+    // 3. REGLA 3: Compañero del jefe anterior
+    // 3. REGLA 3: Compañero del jefe anterior (solo si NO tiene hijos)
 if (!successor) {
-    Node* left = boss->left;
-    Node* right = boss->right;
+    Node* parent = boss->parent;
+    if (parent && parent->parent) {
+        Node* grandBoss = parent->parent;
+        Node* companion = nullptr;
 
-    bool leftValid = left && !left->is_dead && !left->in_jail;
-    bool rightValid = right && !right->is_dead && !right->in_jail;
+        if (grandBoss->left == parent)
+            companion = grandBoss->right;
+        else if (grandBoss->right == parent)
+            companion = grandBoss->left;
 
-    if (leftValid || rightValid) {
-        successor = findSuccessorInSubtree(boss, false);
+        if (companion) {
+            bool alive = !companion->is_dead;
+            bool free_ = !companion->in_jail;
+            bool hasChildren = (companion->left || companion->right);
+
+            if (alive && free_ && !hasChildren) {
+                successor = companion;
+            }
+        }
     }
 }
 
 
-        if (!successor && !hasChildren(boss))
-            successor = findSuccessorFromOtherChildOfParent(boss, false);
+        // 4. REGLA 4: Sucesor del compañero sucesor del jefe anterior
+// 4. REGLA 4: Sucesor del compañero sucesor del jefe anterior
+if (!successor) {
+    Node* parent = boss->parent;
+    if (parent && parent->parent) {
+        Node* grandBoss = parent->parent;
+        Node* companion = nullptr;
 
-        if (!successor)
-            successor = findInPreviousBossCompanion(boss, false);
+        if (grandBoss->left == parent)
+            companion = grandBoss->right;
+        else if (grandBoss->right == parent)
+            companion = grandBoss->left;
 
-        if (!successor)
-            successor = findNearestBossWithTwoFreeSuccessors(false);
+        if (companion) {
+            // buscar primer hijo vivo y libre del compañero
+            Node* child = findSuccessorInSubtree(companion, false);
 
-        if (!successor)
-            successor = findGlobalSuccessor(false);
-
-        if (!successor) {
-            cout << "No hay sucesores libres vivos. Buscando entre encarcelados vivos...\n";
-
-            Node* jailedCandidate = findGlobalSuccessor(true);
-
-            while (jailedCandidate) {
-                successor = findSuccessorInSubtree(jailedCandidate, false);
-
-                if (successor) break;
-
-                Node* next = nullptr;
-
-                Queue q;
-                q.enqueue(root);
-
-                bool foundPrevious = false;
-
-                while (!q.isEmpty()) {
-                    Node* current = q.dequeue();
-
-                    if (current == jailedCandidate) {
-                        foundPrevious = true;
-                    }
-                    else if (foundPrevious) {
-                        if (!current->is_dead && current->in_jail) {
-                            next = current;
-                            break;
-                        }
-                    }
-
-                    if (current->left) q.enqueue(current->left);
-                    if (current->right) q.enqueue(current->right);
-                }
-
-                jailedCandidate = next;
+            if (child) {
+                successor = child;
             }
         }
     }
+}
 
-    while (successor && (successor->is_dead || successor->in_jail || successor->age > 70)) {
-        cout << "El sucesor elegido ("
-             << successor->name << " " << successor->last_name
-             << ") no puede ser jefe (muerto, preso o mayor de 70). Buscando otro...\n";
 
+
+    // ⭐ 4. REGLA 5: Jefe más cercano con dos sucesores libres
+    if (!successor)
+        successor = findNearestBossWithTwoFreeSuccessors(false);
+
+    // 5. REGLA GLOBAL: Primer sucesor vivo y libre en todo el árbol
+    if (!successor)
         successor = findGlobalSuccessor(false);
+
+    // 6. REGLA DE ENCARCELADOS
+    if (!successor) {
+        cout << "No hay sucesores libres vivos. Buscando entre encarcelados vivos...\n";
+
+        Node* jailedCandidate = findGlobalSuccessor(true);
+
+        while (jailedCandidate) {
+            successor = findSuccessorInSubtree(jailedCandidate, false);
+
+            if (successor) break;
+
+            Node* next = nullptr;
+
+            Queue q;
+            q.enqueue(root);
+
+            bool foundPrevious = false;
+
+            while (!q.isEmpty()) {
+                Node* current = q.dequeue();
+
+                if (current == jailedCandidate) {
+                    foundPrevious = true;
+                }
+                else if (foundPrevious) {
+                    if (!current->is_dead && current->in_jail) {
+                        next = current;
+                        break;
+                    }
+                }
+
+                if (current->left) q.enqueue(current->left);
+                if (current->right) q.enqueue(current->right);
+            }
+
+            jailedCandidate = next;
+        }
     }
+}
+
+
+// Solo descartar por edad si NO viene de la regla 5
+bool fromRule5 = false;
+
+// Detectar si successor viene de la regla 5
+if (successor && successor->parent && successor->parent->left && successor->parent->right) {
+    bool leftOk  = !successor->parent->left->is_dead  && !successor->parent->left->in_jail;
+    bool rightOk = !successor->parent->right->is_dead && !successor->parent->right->in_jail;
+
+    if (leftOk && rightOk)
+        fromRule5 = true;
+}
+
+if (!fromRule5) {
+    while (successor && (successor->is_dead || successor->in_jail || successor->age > 70)) {
+        successor = findNextGlobalSuccessor(successor, false);
+    }
+}
+
 
     if (successor) {
         successor->is_boss = true;

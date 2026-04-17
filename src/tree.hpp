@@ -14,6 +14,7 @@ private:
     Node* findInPreviousBossCompanion(Node* boss, bool allowJailed);
     Node* findNearestBossWithTwoFreeSuccessors(bool allowJailed);
     Node* findGlobalSuccessor(bool allowJailed);
+    Node* findNextGlobalSuccessor(Node* skip, bool allowJailed);
     Node* findCurrentBoss();
     bool hasChildren(Node* n);
 

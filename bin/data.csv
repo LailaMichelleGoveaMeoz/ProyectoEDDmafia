@@ -8,7 +8,7 @@ id,name,last_name,gender,age,id_boss,is_dead,in_jail,was_boss,is_boss
 7,Vincent,Mancini,H,28,3,0,0,0,0
 8,Anthony,Corleone,H,25,3,0,1,0,0
 9,Carlo,Rizzi,H,55,3,0,0,0,0
-10,Luigi,Vitelli,H,72,5,0,0,0,0
+10,Luigi,Vitelli,H,54,5,0,0,0,0
 11,Marco,Vitelli,H,38,5,0,0,0,0
 12,Enzo,Abruzzi,H,33,6,0,0,0,0
 13,Paolo,Abruzzi,H,29,6,0,0,0,0
